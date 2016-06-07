@@ -1,4 +1,5 @@
 import os
+import string
 from flask import Flask, request, jsonify, json
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Column
@@ -10,6 +11,7 @@ db = SQLAlchemy(app)
 
 
 user_id = 'test_user'
+valid_chars = string.ascii_letters + '0123456789_.'
 
 
 class UserSettings(db.Model):
@@ -61,7 +63,13 @@ def settings():
         return us.single_kv(request.args.get('key', None))
 
     if request.method == 'PUT':
-        us.upsert(request.get_json())
+        kv = request.get_json()
+
+        for k, v in kv.items():
+            if k == '' or any(c not in valid_chars for c in k):
+                return "error", 400
+
+        us.upsert(kv)
         save_settings(us)
 
     if request.method == 'DELETE':
@@ -75,7 +83,7 @@ def settings():
 def delete_key(key):
         us = UserSettings.query.one_or_none()
 
-        if not us:
+        if not us or key == '':
             return jsonify({})
 
         us.remove_key(key)
