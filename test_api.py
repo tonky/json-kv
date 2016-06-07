@@ -48,7 +48,7 @@ class ApiTestCase(TestCase):
 
         self.app.delete('/%s' % k, content_type='application/json')
 
-    @given(text().filter(valid_word), text())
+    @given(text().filter(lambda w: not valid_word(w)), text())
     @example('', '')
     @example('', 'value')
     def test_add_non_ascii_key(self, k, v):
